@@ -4,13 +4,15 @@ import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useSeatStore } from '../store/seatStore';
 
-const OVERVIEW_POS = new THREE.Vector3(0, 48, 72);
+const OVERVIEW_POS = new THREE.Vector3(0, 50, 75);
 const OVERVIEW_TARGET = new THREE.Vector3(0, 2, 0);
 
-/** Seated eye height above seat origin (realistic adult seated) */
-const EYE_HEIGHT = 1.15;
+/** Realistic adult seated eye height above seat origin */
+const EYE_HEIGHT = 1.22;
 /** Camera slightly behind seat back so it doesn't clip geometry */
-const BEHIND = 0.35;
+const BEHIND = 0.42;
+/** Slight lateral offset so nearby seats / aisles remain visible */
+const LATERAL = 0.08;
 
 export function CameraController() {
   const { camera } = useThree();
@@ -32,18 +34,26 @@ export function CameraController() {
       if (!seat) return;
 
       const [sx, sy, sz] = seat.position;
+      // Face toward pitch: seat.rotation points toward center
       const forwardX = Math.cos(seat.rotation);
       const forwardZ = Math.sin(seat.rotation);
+      // Right vector for slight lateral offset
+      const rightX = Math.cos(seat.rotation + Math.PI / 2);
+      const rightZ = Math.sin(seat.rotation + Math.PI / 2);
 
+      // Eye position: above seat, slightly behind backrest, tiny lateral shift
       endPos.current.set(
-        sx - forwardX * BEHIND,
+        sx - forwardX * BEHIND + rightX * LATERAL,
         sy + EYE_HEIGHT,
-        sz - forwardZ * BEHIND
+        sz - forwardZ * BEHIND + rightZ * LATERAL
       );
 
+      // Look toward pitch with distance-dependent downward angle
+      // VIP (close) looks flatter; upper general looks more down at the field
       const dist = Math.sqrt(sx * sx + sz * sz);
-      const lookY = dist < 36 ? 0.4 : dist < 42 ? 0.55 : 0.75;
-      endTarget.current.set(forwardX * 8, lookY, forwardZ * 8);
+      const lookY = dist < 34 ? 0.35 : dist < 40 ? 0.5 : dist < 46 ? 0.7 : 0.95;
+      const lookDist = dist < 36 ? 12 : dist < 42 ? 16 : 22;
+      endTarget.current.set(forwardX * lookDist, lookY, forwardZ * lookDist);
 
       startPos.current.copy(camera.position);
       if (controlsRef.current) {
@@ -71,7 +81,7 @@ export function CameraController() {
   useFrame((_, delta) => {
     if (!animating.current) return;
 
-    progress.current = Math.min(1, progress.current + delta * 0.85);
+    progress.current = Math.min(1, progress.current + delta * 0.8);
     const t = progress.current;
     const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -93,16 +103,17 @@ export function CameraController() {
       if (controlsRef.current) {
         controlsRef.current.enabled = true;
         if (viewMode === 'seat') {
-          controlsRef.current.minDistance = 0.15;
-          controlsRef.current.maxDistance = 0.8;
-          controlsRef.current.minPolarAngle = 0.55;
-          controlsRef.current.maxPolarAngle = Math.PI / 2.05;
+          // Tight look-around from seat — no orbit into geometry
+          controlsRef.current.minDistance = 0.12;
+          controlsRef.current.maxDistance = 0.65;
+          controlsRef.current.minPolarAngle = 0.5;
+          controlsRef.current.maxPolarAngle = Math.PI / 2.1;
           controlsRef.current.enablePan = false;
         } else {
           controlsRef.current.minDistance = 22;
-          controlsRef.current.maxDistance = 120;
-          controlsRef.current.minPolarAngle = 0.25;
-          controlsRef.current.maxPolarAngle = Math.PI / 2.25;
+          controlsRef.current.maxDistance = 130;
+          controlsRef.current.minPolarAngle = 0.22;
+          controlsRef.current.maxPolarAngle = Math.PI / 2.2;
           controlsRef.current.enablePan = true;
         }
       }
@@ -115,9 +126,9 @@ export function CameraController() {
       enableDamping
       dampingFactor={0.08}
       minDistance={22}
-      maxDistance={120}
-      minPolarAngle={0.25}
-      maxPolarAngle={Math.PI / 2.25}
+      maxDistance={130}
+      minPolarAngle={0.22}
+      maxPolarAngle={Math.PI / 2.2}
       target={[0, 2, 0]}
       enablePan={viewMode === 'overview'}
     />
