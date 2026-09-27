@@ -39,9 +39,9 @@ export const CATEGORY_PRICES: Record<SeatCategory, number> = {
 
 /** Realistic stadium seat fabric colors (not neon) */
 export const CATEGORY_COLORS: Record<SeatCategory, string> = {
-  general: '#5a6b7a',
-  premium: '#2f5d8a',
-  vip: '#6b3a2a',
+  general: '#5e7080', // slate blue-grey plastic
+  premium: '#2c5a88', // deep stadium blue
+  vip: '#6e3c2c', // burgundy / premium leather-brown
 };
 
 export const STATUS_COLORS: Record<SeatStatus, string> = {

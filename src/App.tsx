@@ -57,7 +57,7 @@ export default function App() {
             antialias: true,
             powerPreference: 'high-performance',
             toneMapping: THREE.ACESFilmicToneMapping,
-            toneMappingExposure: 1.25,
+            toneMappingExposure: 1.4,
             outputColorSpace: THREE.SRGBColorSpace,
           }}
         >
