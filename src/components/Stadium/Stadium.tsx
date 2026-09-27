@@ -4,18 +4,45 @@ import { Stands } from './Stands';
 import { Seats } from './Seats';
 import { Floodlights } from './Floodlights';
 import { Scoreboard } from './Scoreboard';
-import { Sky } from '@react-three/drei';
+import { Sky, Environment } from '@react-three/drei';
+import * as THREE from 'three';
 
 export function Stadium() {
   return (
     <Suspense fallback={null}>
-      <Sky distance={450000} sunPosition={[0, -0.2, -1]} inclination={0.1} azimuth={0.25} mieCoefficient={0.008} mieDirectionalG={0.7} rayleigh={0.5} turbidity={8} />
-      <color attach="background" args={['#0a0e17']} />
-      <fog attach="fog" args={['#0a0e17', 80, 200]} />
+      <Sky
+        distance={450000}
+        sunPosition={[8, 2.5, -12]}
+        inclination={0.48}
+        azimuth={0.22}
+        mieCoefficient={0.005}
+        mieDirectionalG={0.8}
+        rayleigh={1.2}
+        turbidity={4}
+      />
+      <color attach="background" args={['#1a2740']} />
+      <fog attach="fog" args={['#1a2740', 120, 280]} />
 
-      <ambientLight intensity={0.25} color="#a8c0d8" />
-      <directionalLight position={[30, 50, 20]} intensity={0.4} color="#e8f0ff" castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-far={150} shadow-camera-left={-60} shadow-camera-right={60} shadow-camera-top={60} shadow-camera-bottom={-60} />
-      <hemisphereLight intensity={0.3} color="#4a6a8a" groundColor="#1a1e28" />
+      <ambientLight intensity={0.55} color="#c8d8f0" />
+      <hemisphereLight intensity={0.55} color="#a8c4e8" groundColor="#3a4a38" />
+
+      <directionalLight
+        position={[40, 55, 25]}
+        intensity={0.85}
+        color="#fff0d8"
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-far={160}
+        shadow-camera-left={-70}
+        shadow-camera-right={70}
+        shadow-camera-top={70}
+        shadow-camera-bottom={-70}
+        shadow-bias={-0.0002}
+      />
+
+      <directionalLight position={[-30, 30, -20]} intensity={0.35} color="#b0c8e8" />
+      <Environment preset="city" environmentIntensity={0.35} />
 
       <Pitch />
       <Stands />
@@ -28,22 +55,34 @@ export function Stadium() {
 }
 
 function CrowdParticles() {
-  const count = 400;
+  const count = 500;
   const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const palette = [
+    new THREE.Color('#c4a574'),
+    new THREE.Color('#8a9bb0'),
+    new THREE.Color('#d4c4a8'),
+    new THREE.Color('#6a7a8a'),
+  ];
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const r = 36 + Math.random() * 18;
+    const r = 34 + Math.random() * 20;
     positions[i * 3] = Math.cos(angle) * r;
-    positions[i * 3 + 1] = 3 + Math.random() * 12;
+    positions[i * 3 + 1] = 2.5 + Math.random() * 14;
     positions[i * 3 + 2] = Math.sin(angle) * r;
+    const c = palette[i % palette.length];
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
   }
 
   return (
     <points>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.15} color="#ffcc88" transparent opacity={0.35} sizeAttenuation />
+      <pointsMaterial size={0.18} vertexColors transparent opacity={0.45} sizeAttenuation />
     </points>
   );
 }
