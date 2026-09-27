@@ -4,8 +4,13 @@ import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useSeatStore } from '../store/seatStore';
 
-const OVERVIEW_POS = new THREE.Vector3(0, 55, 70);
-const OVERVIEW_TARGET = new THREE.Vector3(0, 0, 0);
+const OVERVIEW_POS = new THREE.Vector3(0, 48, 72);
+const OVERVIEW_TARGET = new THREE.Vector3(0, 2, 0);
+
+/** Seated eye height above seat origin (realistic adult seated) */
+const EYE_HEIGHT = 1.15;
+/** Camera slightly behind seat back so it doesn't clip geometry */
+const BEHIND = 0.35;
 
 export function CameraController() {
   const { camera } = useThree();
@@ -27,14 +32,18 @@ export function CameraController() {
       if (!seat) return;
 
       const [sx, sy, sz] = seat.position;
-      const back = 1.8;
-      const up = 1.4;
+      const forwardX = Math.cos(seat.rotation);
+      const forwardZ = Math.sin(seat.rotation);
+
       endPos.current.set(
-        sx - Math.cos(seat.rotation) * back,
-        sy + up,
-        sz - Math.sin(seat.rotation) * back
+        sx - forwardX * BEHIND,
+        sy + EYE_HEIGHT,
+        sz - forwardZ * BEHIND
       );
-      endTarget.current.set(0, 0.8, 0);
+
+      const dist = Math.sqrt(sx * sx + sz * sz);
+      const lookY = dist < 36 ? 0.4 : dist < 42 ? 0.55 : 0.75;
+      endTarget.current.set(forwardX * 8, lookY, forwardZ * 8);
 
       startPos.current.copy(camera.position);
       if (controlsRef.current) {
@@ -62,7 +71,7 @@ export function CameraController() {
   useFrame((_, delta) => {
     if (!animating.current) return;
 
-    progress.current = Math.min(1, progress.current + delta * 0.9);
+    progress.current = Math.min(1, progress.current + delta * 0.85);
     const t = progress.current;
     const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -84,15 +93,17 @@ export function CameraController() {
       if (controlsRef.current) {
         controlsRef.current.enabled = true;
         if (viewMode === 'seat') {
-          controlsRef.current.minDistance = 0.5;
-          controlsRef.current.maxDistance = 4;
-          controlsRef.current.minPolarAngle = 0.3;
-          controlsRef.current.maxPolarAngle = Math.PI / 2.1;
+          controlsRef.current.minDistance = 0.15;
+          controlsRef.current.maxDistance = 0.8;
+          controlsRef.current.minPolarAngle = 0.55;
+          controlsRef.current.maxPolarAngle = Math.PI / 2.05;
+          controlsRef.current.enablePan = false;
         } else {
-          controlsRef.current.minDistance = 20;
+          controlsRef.current.minDistance = 22;
           controlsRef.current.maxDistance = 120;
-          controlsRef.current.minPolarAngle = 0.2;
-          controlsRef.current.maxPolarAngle = Math.PI / 2.2;
+          controlsRef.current.minPolarAngle = 0.25;
+          controlsRef.current.maxPolarAngle = Math.PI / 2.25;
+          controlsRef.current.enablePan = true;
         }
       }
     }
@@ -103,11 +114,11 @@ export function CameraController() {
       ref={controlsRef}
       enableDamping
       dampingFactor={0.08}
-      minDistance={20}
+      minDistance={22}
       maxDistance={120}
-      minPolarAngle={0.2}
-      maxPolarAngle={Math.PI / 2.2}
-      target={[0, 0, 0]}
+      minPolarAngle={0.25}
+      maxPolarAngle={Math.PI / 2.25}
+      target={[0, 2, 0]}
       enablePan={viewMode === 'overview'}
     />
   );
