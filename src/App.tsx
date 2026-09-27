@@ -1,5 +1,6 @@
 import { useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { Stadium } from './components/Stadium/Stadium';
 import { CameraController } from './components/CameraController';
 import { Header } from './components/UI/Header';
@@ -51,10 +52,13 @@ export default function App() {
         <Canvas
           shadows
           dpr={[1, 1.75]}
-          camera={{ position: [0, 55, 70], fov: 45, near: 0.1, far: 300 }}
+          camera={{ position: [0, 48, 72], fov: 42, near: 0.1, far: 320 }}
           gl={{
             antialias: true,
             powerPreference: 'high-performance',
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.25,
+            outputColorSpace: THREE.SRGBColorSpace,
           }}
         >
           <Suspense fallback={null}>
