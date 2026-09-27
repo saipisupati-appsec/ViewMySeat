@@ -1,25 +1,197 @@
 import type { Seat, SeatCategory, SeatStatus } from '../types';
 import { CATEGORY_PRICES } from '../types';
 
-/** Cricket stadium seat layout – oval stands around a rectangular pitch */
+/**
+ * Cricket stadium layout with clear physical tiers:
+ * - VIP: closest to pitch, spacious, fewer seats (West pavilion lower)
+ * - Premium: mid-tier, better sightlines (lower bowls N/S + west upper)
+ * - General: upper / outer stands
+ * Clear radial gaps between categories + aisle gaps every ~8–10 seats.
+ */
 const SECTIONS = [
-  // North stand (behind bowler's arm / pavilion side)
-  { id: 'N1', name: 'North Lower', startAngle: -0.45, endAngle: 0.45, radius: 38, tiers: 1, rows: 8, seatsPerRow: 42, category: 'premium' as SeatCategory, yBase: 2.5 },
-  { id: 'N2', name: 'North Upper', startAngle: -0.4, endAngle: 0.4, radius: 42, tiers: 1, rows: 10, seatsPerRow: 48, category: 'general' as SeatCategory, yBase: 8 },
-  // South stand
-  { id: 'S1', name: 'South Lower', startAngle: Math.PI - 0.45, endAngle: Math.PI + 0.45, radius: 38, tiers: 1, rows: 8, seatsPerRow: 42, category: 'premium' as SeatCategory, yBase: 2.5 },
-  { id: 'S2', name: 'South Upper', startAngle: Math.PI - 0.4, endAngle: Math.PI + 0.4, radius: 42, tiers: 1, rows: 10, seatsPerRow: 48, category: 'general' as SeatCategory, yBase: 8 },
-  // East stand (square leg / long-on)
-  { id: 'E1', name: 'East Lower', startAngle: Math.PI / 2 - 0.55, endAngle: Math.PI / 2 + 0.55, radius: 45, tiers: 1, rows: 6, seatsPerRow: 36, category: 'general' as SeatCategory, yBase: 2.2 },
-  { id: 'E2', name: 'East Upper', startAngle: Math.PI / 2 - 0.5, endAngle: Math.PI / 2 + 0.5, radius: 49, tiers: 1, rows: 8, seatsPerRow: 40, category: 'general' as SeatCategory, yBase: 7.5 },
-  // West stand (VIP / pavilion)
-  { id: 'W1', name: 'West Pavilion', startAngle: -Math.PI / 2 - 0.5, endAngle: -Math.PI / 2 + 0.5, radius: 40, tiers: 1, rows: 5, seatsPerRow: 28, category: 'vip' as SeatCategory, yBase: 3 },
-  { id: 'W2', name: 'West Upper', startAngle: -Math.PI / 2 - 0.45, endAngle: -Math.PI / 2 + 0.45, radius: 44, tiers: 1, rows: 7, seatsPerRow: 32, category: 'premium' as SeatCategory, yBase: 8.5 },
-  // Corner blocks
-  { id: 'NE', name: 'North-East', startAngle: 0.5, endAngle: Math.PI / 2 - 0.55, radius: 46, tiers: 1, rows: 5, seatsPerRow: 22, category: 'general' as SeatCategory, yBase: 2.5 },
-  { id: 'SE', name: 'South-East', startAngle: Math.PI / 2 + 0.55, endAngle: Math.PI - 0.5, radius: 46, tiers: 1, rows: 5, seatsPerRow: 22, category: 'general' as SeatCategory, yBase: 2.5 },
-  { id: 'SW', name: 'South-West', startAngle: Math.PI + 0.5, endAngle: -Math.PI / 2 - 0.5 + 2 * Math.PI, radius: 46, tiers: 1, rows: 5, seatsPerRow: 22, category: 'premium' as SeatCategory, yBase: 2.5 },
-  { id: 'NW', name: 'North-West', startAngle: -Math.PI / 2 + 0.5, endAngle: -0.5, radius: 46, tiers: 1, rows: 5, seatsPerRow: 22, category: 'premium' as SeatCategory, yBase: 2.5 },
+  // —— VIP (closest, spacious) ——
+  {
+    id: 'VIP-W',
+    name: 'West VIP Pavilion',
+    startAngle: -Math.PI / 2 - 0.42,
+    endAngle: -Math.PI / 2 + 0.42,
+    radius: 31,
+    rows: 4,
+    seatsPerRow: 16,
+    category: 'vip' as SeatCategory,
+    yBase: 1.9,
+    rowDepth: 1.4,
+    rowRise: 0.75,
+    seatGap: 1.05,
+    aisleEvery: 5,
+  },
+  // —— PREMIUM lower bowl ——
+  {
+    id: 'P-N',
+    name: 'North Premium',
+    startAngle: -0.48,
+    endAngle: 0.48,
+    radius: 36,
+    rows: 7,
+    seatsPerRow: 34,
+    category: 'premium' as SeatCategory,
+    yBase: 2.1,
+    rowDepth: 1.22,
+    rowRise: 0.78,
+    seatGap: 0.8,
+    aisleEvery: 9,
+  },
+  {
+    id: 'P-S',
+    name: 'South Premium',
+    startAngle: Math.PI - 0.48,
+    endAngle: Math.PI + 0.48,
+    radius: 36,
+    rows: 7,
+    seatsPerRow: 34,
+    category: 'premium' as SeatCategory,
+    yBase: 2.1,
+    rowDepth: 1.22,
+    rowRise: 0.78,
+    seatGap: 0.8,
+    aisleEvery: 9,
+  },
+  {
+    id: 'P-W',
+    name: 'West Premium Upper',
+    startAngle: -Math.PI / 2 - 0.4,
+    endAngle: -Math.PI / 2 + 0.4,
+    radius: 40,
+    rows: 6,
+    seatsPerRow: 26,
+    category: 'premium' as SeatCategory,
+    yBase: 6.8,
+    rowDepth: 1.18,
+    rowRise: 0.82,
+    seatGap: 0.82,
+    aisleEvery: 8,
+  },
+  {
+    id: 'P-SW',
+    name: 'South-West Premium',
+    startAngle: Math.PI + 0.52,
+    endAngle: -Math.PI / 2 - 0.48 + 2 * Math.PI,
+    radius: 38,
+    rows: 5,
+    seatsPerRow: 18,
+    category: 'premium' as SeatCategory,
+    yBase: 2.2,
+    rowDepth: 1.22,
+    rowRise: 0.78,
+    seatGap: 0.82,
+    aisleEvery: 8,
+  },
+  {
+    id: 'P-NW',
+    name: 'North-West Premium',
+    startAngle: -Math.PI / 2 + 0.48,
+    endAngle: -0.52,
+    radius: 38,
+    rows: 5,
+    seatsPerRow: 18,
+    category: 'premium' as SeatCategory,
+    yBase: 2.2,
+    rowDepth: 1.22,
+    rowRise: 0.78,
+    seatGap: 0.82,
+    aisleEvery: 8,
+  },
+  // —— GENERAL upper / outer ——
+  {
+    id: 'G-N',
+    name: 'North Upper General',
+    startAngle: -0.42,
+    endAngle: 0.42,
+    radius: 45,
+    rows: 10,
+    seatsPerRow: 42,
+    category: 'general' as SeatCategory,
+    yBase: 8.4,
+    rowDepth: 1.12,
+    rowRise: 0.84,
+    seatGap: 0.74,
+    aisleEvery: 10,
+  },
+  {
+    id: 'G-S',
+    name: 'South Upper General',
+    startAngle: Math.PI - 0.42,
+    endAngle: Math.PI + 0.42,
+    radius: 45,
+    rows: 10,
+    seatsPerRow: 42,
+    category: 'general' as SeatCategory,
+    yBase: 8.4,
+    rowDepth: 1.12,
+    rowRise: 0.84,
+    seatGap: 0.74,
+    aisleEvery: 10,
+  },
+  {
+    id: 'G-E',
+    name: 'East Lower General',
+    startAngle: Math.PI / 2 - 0.55,
+    endAngle: Math.PI / 2 + 0.55,
+    radius: 40,
+    rows: 6,
+    seatsPerRow: 32,
+    category: 'general' as SeatCategory,
+    yBase: 2.1,
+    rowDepth: 1.18,
+    rowRise: 0.76,
+    seatGap: 0.76,
+    aisleEvery: 9,
+  },
+  {
+    id: 'G-EU',
+    name: 'East Upper General',
+    startAngle: Math.PI / 2 - 0.5,
+    endAngle: Math.PI / 2 + 0.5,
+    radius: 47,
+    rows: 8,
+    seatsPerRow: 36,
+    category: 'general' as SeatCategory,
+    yBase: 7.4,
+    rowDepth: 1.12,
+    rowRise: 0.82,
+    seatGap: 0.74,
+    aisleEvery: 10,
+  },
+  {
+    id: 'G-NE',
+    name: 'North-East General',
+    startAngle: 0.52,
+    endAngle: Math.PI / 2 - 0.58,
+    radius: 42,
+    rows: 5,
+    seatsPerRow: 18,
+    category: 'general' as SeatCategory,
+    yBase: 2.3,
+    rowDepth: 1.18,
+    rowRise: 0.76,
+    seatGap: 0.76,
+    aisleEvery: 8,
+  },
+  {
+    id: 'G-SE',
+    name: 'South-East General',
+    startAngle: Math.PI / 2 + 0.58,
+    endAngle: Math.PI - 0.52,
+    radius: 42,
+    rows: 5,
+    seatsPerRow: 18,
+    category: 'general' as SeatCategory,
+    yBase: 2.3,
+    rowDepth: 1.18,
+    rowRise: 0.76,
+    seatGap: 0.76,
+    aisleEvery: 8,
+  },
 ];
 
 function seededRandom(seed: number): () => number {
@@ -39,12 +211,25 @@ export function generateSeats(bookedIds: Set<string> = new Set()): Seat[] {
     const span = angleSpan < 0 ? angleSpan + Math.PI * 2 : angleSpan;
 
     for (let row = 0; row < section.rows; row++) {
-      const rowRadius = section.radius + row * 1.15;
-      const y = section.yBase + row * 0.85;
-      const seatsInRow = Math.max(8, Math.floor(section.seatsPerRow * (1 + row * 0.02)));
+      const rowRadius = section.radius + row * section.rowDepth;
+      const y = section.yBase + row * section.rowRise;
+      const seatsInRow = Math.max(
+        6,
+        Math.floor(section.seatsPerRow * (1 + row * 0.015))
+      );
 
+      const slots: number[] = [];
       for (let n = 0; n < seatsInRow; n++) {
-        const t = (n + 0.5) / seatsInRow;
+        if (section.aisleEvery > 0 && n > 0 && n % section.aisleEvery === 0) {
+          continue;
+        }
+        slots.push(n);
+      }
+
+      const totalArcSeats = seatsInRow;
+      for (let si = 0; si < slots.length; si++) {
+        const n = slots[si];
+        const t = (n + 0.5) / totalArcSeats;
         let angle = section.startAngle + t * span;
         if (angle > Math.PI) angle -= Math.PI * 2;
         if (angle < -Math.PI) angle += Math.PI * 2;
@@ -52,11 +237,12 @@ export function generateSeats(bookedIds: Set<string> = new Set()): Seat[] {
         const x = Math.cos(angle) * rowRadius;
         const z = Math.sin(angle) * rowRadius;
         const rotation = angle + Math.PI;
-        const id = `${section.id}-R${row + 1}-S${n + 1}`;
+
+        const id = `${section.id}-R${row + 1}-S${si + 1}`;
         let status: SeatStatus = 'available';
         if (bookedIds.has(id)) {
           status = 'booked';
-        } else if (rand() < 0.22) {
+        } else if (rand() < 0.2) {
           status = 'booked';
         }
 
@@ -64,13 +250,13 @@ export function generateSeats(bookedIds: Set<string> = new Set()): Seat[] {
           id,
           section: section.name,
           row: row + 1,
-          number: n + 1,
+          number: si + 1,
           category: section.category,
           price: CATEGORY_PRICES[section.category],
           status,
           position: [x, y, z],
           rotation,
-          lookAt: [0, 0.5, 0],
+          lookAt: [0, 0.6, 0],
         });
       }
     }
