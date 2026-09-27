@@ -37,16 +37,17 @@ export const CATEGORY_PRICES: Record<SeatCategory, number> = {
   vip: 4999,
 };
 
+/** Realistic stadium seat fabric colors (not neon) */
 export const CATEGORY_COLORS: Record<SeatCategory, string> = {
-  general: '#4ade80',
-  premium: '#60a5fa',
-  vip: '#f59e0b',
+  general: '#5a6b7a',
+  premium: '#2f5d8a',
+  vip: '#6b3a2a',
 };
 
 export const STATUS_COLORS: Record<SeatStatus, string> = {
-  available: '#4ade80',
-  selected: '#f472b6',
-  booked: '#64748b',
+  available: '#5a6b7a',
+  selected: '#c45c8a',
+  booked: '#4a5560',
 };
 
 export const MATCH: MatchInfo = {
