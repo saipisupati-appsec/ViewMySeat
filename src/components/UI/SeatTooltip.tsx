@@ -10,29 +10,24 @@ export function SeatTooltip() {
   const seat = seats.find((s) => s.id === hoveredId);
   if (!seat) return null;
 
+  const badgeColor =
+    seat.status === 'booked'
+      ? STATUS_COLORS.booked
+      : seat.status === 'selected'
+        ? STATUS_COLORS.selected
+        : CATEGORY_COLORS[seat.category];
+
   return (
-    <div className="seat-tooltip">
+    <div className="seat-tooltip" role="tooltip">
       <div className="tooltip-header">
-        <span
-          className="cat-badge"
-          style={{
-            background:
-              seat.status === 'booked'
-                ? STATUS_COLORS.booked
-                : seat.status === 'selected'
-                  ? STATUS_COLORS.selected
-                  : CATEGORY_COLORS[seat.category],
-          }}
-        >
-          {seat.category.toUpperCase()}
+        <span className="cat-badge" style={{ background: badgeColor }}>
+          {seat.category}
         </span>
         <span className={`status status-${seat.status}`}>{seat.status}</span>
       </div>
       <div className="tooltip-body">
-        <p>
-          <strong>{seat.section}</strong>
-        </p>
-        <p>
+        <p className="tooltip-section">{seat.section}</p>
+        <p className="tooltip-loc">
           Row {seat.row} · Seat {seat.number}
         </p>
         <p className="tooltip-price">₹{seat.price.toLocaleString('en-IN')}</p>
@@ -42,6 +37,9 @@ export function SeatTooltip() {
       )}
       {seat.status === 'selected' && (
         <p className="tooltip-hint">Click to deselect · Double-click for view</p>
+      )}
+      {seat.status === 'booked' && (
+        <p className="tooltip-hint">This seat is already booked</p>
       )}
     </div>
   );
