@@ -6,13 +6,15 @@ import { useSeatStore } from '../store/seatStore';
 
 const OVERVIEW_POS = new THREE.Vector3(0, 50, 75);
 const OVERVIEW_TARGET = new THREE.Vector3(0, 2, 0);
+const OVERVIEW_FOV = 42;
+const SEAT_FOV = 62;
 
-/** Realistic adult seated eye height above seat origin */
-const EYE_HEIGHT = 1.22;
-/** Camera slightly behind seat back so it doesn't clip geometry */
-const BEHIND = 0.42;
+/** Realistic adult seated eye height above seat origin (~1.15–1.2 m) */
+const EYE_HEIGHT = 1.18;
+/** Camera slightly behind seat back to avoid clipping geometry */
+const BEHIND = 0.38;
 /** Slight lateral offset so nearby seats / aisles remain visible */
-const LATERAL = 0.08;
+const LATERAL = 0.1;
 
 export function CameraController() {
   const { camera } = useThree();
@@ -26,33 +28,35 @@ export function CameraController() {
   const startTarget = useRef(new THREE.Vector3());
   const endPos = useRef(new THREE.Vector3());
   const endTarget = useRef(new THREE.Vector3());
+  const startFov = useRef(OVERVIEW_FOV);
+  const endFov = useRef(OVERVIEW_FOV);
   const progress = useRef(0);
 
   useEffect(() => {
+    const persp = camera as THREE.PerspectiveCamera;
+
     if (viewMode === 'seat' && focusedSeatId) {
       const seat = seats.find((s) => s.id === focusedSeatId);
       if (!seat) return;
 
       const [sx, sy, sz] = seat.position;
-      // Face toward pitch: seat.rotation points toward center
+      // Face toward pitch centre
       const forwardX = Math.cos(seat.rotation);
       const forwardZ = Math.sin(seat.rotation);
-      // Right vector for slight lateral offset
       const rightX = Math.cos(seat.rotation + Math.PI / 2);
       const rightZ = Math.sin(seat.rotation + Math.PI / 2);
 
-      // Eye position: above seat, slightly behind backrest, tiny lateral shift
+      // Eye position: above seat pan, slightly behind backrest
       endPos.current.set(
         sx - forwardX * BEHIND + rightX * LATERAL,
         sy + EYE_HEIGHT,
         sz - forwardZ * BEHIND + rightZ * LATERAL
       );
 
-      // Look toward pitch with distance-dependent downward angle
-      // VIP (close) looks flatter; upper general looks more down at the field
+      // Distance-dependent look target — VIP closer / flatter, upper wider view
       const dist = Math.sqrt(sx * sx + sz * sz);
-      const lookY = dist < 34 ? 0.35 : dist < 40 ? 0.5 : dist < 46 ? 0.7 : 0.95;
-      const lookDist = dist < 36 ? 12 : dist < 42 ? 16 : 22;
+      const lookY = dist < 34 ? 0.32 : dist < 40 ? 0.48 : dist < 46 ? 0.68 : 0.9;
+      const lookDist = dist < 36 ? 11 : dist < 42 ? 15 : 20;
       endTarget.current.set(forwardX * lookDist, lookY, forwardZ * lookDist);
 
       startPos.current.copy(camera.position);
@@ -61,6 +65,9 @@ export function CameraController() {
       } else {
         startTarget.current.copy(OVERVIEW_TARGET);
       }
+
+      startFov.current = persp.fov;
+      endFov.current = SEAT_FOV;
 
       progress.current = 0;
       animating.current = true;
@@ -72,6 +79,10 @@ export function CameraController() {
       }
       endPos.current.copy(OVERVIEW_POS);
       endTarget.current.copy(OVERVIEW_TARGET);
+
+      startFov.current = persp.fov;
+      endFov.current = OVERVIEW_FOV;
+
       progress.current = 0;
       animating.current = true;
       if (controlsRef.current) controlsRef.current.enabled = false;
@@ -81,7 +92,7 @@ export function CameraController() {
   useFrame((_, delta) => {
     if (!animating.current) return;
 
-    progress.current = Math.min(1, progress.current + delta * 0.8);
+    progress.current = Math.min(1, progress.current + delta * 0.85);
     const t = progress.current;
     const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -94,6 +105,10 @@ export function CameraController() {
     );
     camera.lookAt(target);
 
+    const persp = camera as THREE.PerspectiveCamera;
+    persp.fov = THREE.MathUtils.lerp(startFov.current, endFov.current, ease);
+    persp.updateProjectionMatrix();
+
     if (controlsRef.current) {
       controlsRef.current.target.copy(target);
     }
@@ -103,11 +118,11 @@ export function CameraController() {
       if (controlsRef.current) {
         controlsRef.current.enabled = true;
         if (viewMode === 'seat') {
-          // Tight look-around from seat — no orbit into geometry
-          controlsRef.current.minDistance = 0.12;
-          controlsRef.current.maxDistance = 0.65;
-          controlsRef.current.minPolarAngle = 0.5;
-          controlsRef.current.maxPolarAngle = Math.PI / 2.1;
+          // Limited look-around — keeps camera near the seat
+          controlsRef.current.minDistance = 0.1;
+          controlsRef.current.maxDistance = 0.55;
+          controlsRef.current.minPolarAngle = 0.48;
+          controlsRef.current.maxPolarAngle = Math.PI / 2.05;
           controlsRef.current.enablePan = false;
         } else {
           controlsRef.current.minDistance = 22;
